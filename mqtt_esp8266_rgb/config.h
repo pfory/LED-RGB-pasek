@@ -7,8 +7,8 @@
 
 // Pins
 #define CONFIG_PIN_RED 0
-#define CONFIG_PIN_GREEN 2
-#define CONFIG_PIN_BLUE 3
+#define CONFIG_PIN_GREEN 1
+#define CONFIG_PIN_BLUE 2
 
 // WiFi
 #define CONFIG_WIFI_SSID "Datlovo"
