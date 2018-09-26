@@ -4192,9 +4192,9 @@ Grid 5.00 mm&lt;p&gt;
 <part name="GND6" library="supply1" deviceset="GND" device=""/>
 <part name="GND4" library="supply1" deviceset="GND" device=""/>
 <part name="SV1" library="con-lstb" deviceset="MA04-2" device="" value="ESP8266"/>
-<part name="R4" library="rcl" deviceset="R-EU_" device="0207/10" value="10k"/>
-<part name="R5" library="rcl" deviceset="R-EU_" device="0207/10" value="10k"/>
-<part name="R6" library="rcl" deviceset="R-EU_" device="0207/10" value="10k"/>
+<part name="R4" library="rcl" deviceset="R-EU_" device="0207/10" value="1k"/>
+<part name="R5" library="rcl" deviceset="R-EU_" device="0207/10" value="1k"/>
+<part name="R6" library="rcl" deviceset="R-EU_" device="0207/10" value="1k"/>
 <part name="R7" library="rcl" deviceset="R-EU_" device="0207/10" value="10k"/>
 <part name="RESET" library="switch-misc" library_urn="urn:adsk.eagle:library:376" deviceset="PVA1R" device="" package3d_urn="urn:adsk.eagle:package:27429/1"/>
 <part name="GND7" library="supply1" deviceset="GND" device=""/>
