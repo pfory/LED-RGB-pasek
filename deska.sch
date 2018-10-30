@@ -4265,6 +4265,7 @@ Grid 5.00 mm&lt;p&gt;
 <junction x="-7.62" y="43.18"/>
 <pinref part="SERIAL" gate="G$1" pin="1"/>
 <wire x1="2.54" y1="25.4" x2="2.54" y2="22.86" width="0.1524" layer="91"/>
+<label x="-7.62" y="40.64" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="RESET" gate="1" pin="S"/>
@@ -4333,7 +4334,7 @@ Grid 5.00 mm&lt;p&gt;
 <pinref part="R3" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="N$7" class="0">
+<net name="RX" class="0">
 <segment>
 <pinref part="R1" gate="G$1" pin="1"/>
 <wire x1="-7.62" y1="50.8" x2="-7.62" y2="66.04" width="0.1524" layer="91"/>
@@ -4347,9 +4348,10 @@ Grid 5.00 mm&lt;p&gt;
 <pinref part="SERIAL" gate="G$1" pin="3"/>
 <wire x1="-10.16" y1="25.4" x2="-10.16" y2="22.86" width="0.1524" layer="91"/>
 <wire x1="-10.16" y1="22.86" x2="-2.54" y2="22.86" width="0.1524" layer="91"/>
+<label x="-10.16" y="53.34" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$8" class="0">
+<net name="GPIO0" class="0">
 <segment>
 <pinref part="R2" gate="G$1" pin="1"/>
 <wire x1="40.64" y1="35.56" x2="40.64" y2="66.04" width="0.1524" layer="91"/>
@@ -4359,9 +4361,10 @@ Grid 5.00 mm&lt;p&gt;
 <pinref part="SV1" gate="G$1" pin="6"/>
 <pinref part="R5" gate="G$1" pin="1"/>
 <junction x="-12.7" y="48.26"/>
+<label x="-10.16" y="48.26" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$10" class="0">
+<net name="GPIO2" class="0">
 <segment>
 <wire x1="-7.62" y1="45.72" x2="-17.78" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="-17.78" y1="45.72" x2="-17.78" y2="33.02" width="0.1524" layer="91"/>
@@ -4372,9 +4375,10 @@ Grid 5.00 mm&lt;p&gt;
 <pinref part="SV1" gate="G$1" pin="4"/>
 <pinref part="R6" gate="G$1" pin="1"/>
 <junction x="-17.78" y="45.72"/>
+<label x="-10.16" y="45.72" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$12" class="0">
+<net name="RST" class="0">
 <segment>
 <pinref part="RESET" gate="1" pin="P"/>
 <pinref part="RESET" gate="2" pin="P"/>
@@ -4387,6 +4391,7 @@ Grid 5.00 mm&lt;p&gt;
 <wire x1="15.24" y1="48.26" x2="15.24" y2="40.64" width="0.1524" layer="91"/>
 <wire x1="15.24" y1="40.64" x2="20.32" y2="40.64" width="0.1524" layer="91"/>
 <junction x="15.24" y="40.64"/>
+<label x="10.16" y="48.26" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="+3V3" class="0">
@@ -4419,6 +4424,7 @@ Grid 5.00 mm&lt;p&gt;
 <wire x1="17.78" y1="76.2" x2="30.48" y2="76.2" width="0.1524" layer="91"/>
 <wire x1="30.48" y1="76.2" x2="30.48" y2="50.8" width="0.1524" layer="91"/>
 <junction x="30.48" y="50.8"/>
+<label x="7.62" y="53.34" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="+12V" class="0">
@@ -4436,13 +4442,14 @@ Grid 5.00 mm&lt;p&gt;
 <wire x1="48.26" y1="88.9" x2="48.26" y2="93.98" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$9" class="0">
+<net name="TX" class="0">
 <segment>
 <pinref part="SV1" gate="G$1" pin="1"/>
 <wire x1="7.62" y1="43.18" x2="7.62" y2="38.1" width="0.1524" layer="91"/>
 <wire x1="7.62" y1="38.1" x2="0" y2="38.1" width="0.1524" layer="91"/>
 <pinref part="SERIAL" gate="G$1" pin="2"/>
 <wire x1="0" y1="38.1" x2="0" y2="22.86" width="0.1524" layer="91"/>
+<label x="10.16" y="43.18" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
