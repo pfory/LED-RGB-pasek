@@ -11,6 +11,9 @@ POZOR na verzi desky esp8266 2.42+, nefunguje interrupt, až do vyřešení nep�
 
 #include "Configuration.h"
 
+uint32_t heartBeat                          = 0;
+
+
 #ifdef time
 #include <TimeLib.h>
 #include <Timezone.h>
@@ -26,16 +29,31 @@ time_t getNtpTime();
 #endif
 
 // Real values to write to the LEDs (ex. including brightness and state)
-byte realRed = 0;
-byte realGreen = 0;
-byte realBlue = 0;
+byte          realRed           = 0;
+byte          realGreen         = 0;
+byte          realBlue          = 0;
 
-const int redPin = CONFIG_PIN_RED;
+const int     redPin            = CONFIG_PIN_RED;
 //const int txPin = BUILTIN_LED; // On-board blue LED
-const int greenPin = CONFIG_PIN_GREEN;
-const int bluePin = CONFIG_PIN_BLUE;
+const int     greenPin          = CONFIG_PIN_GREEN;
+const int     bluePin           = CONFIG_PIN_BLUE;
 
-bool stateOn = false;
+// Maintained state for reporting to HA
+byte          red               = 255;
+byte          green             = 255;
+byte          blue              = 255;
+byte          brightness        = 255;
+
+bool          stateOn           = false;
+
+// Globals for fade/transitions
+bool          startFade         = false;
+unsigned long lastLoop          = 0;
+int           transitionTime    = 0;
+bool          inFade            = false;
+int           loopCount         = 0;
+int           stepR, stepG, stepB;
+int           redVal, grnVal, bluVal;
 
 
 bool isDebugEnabled()
@@ -49,6 +67,14 @@ bool isDebugEnabled()
 //for LED status
 #include <Ticker.h>
 Ticker ticker;
+
+void tick()
+{
+  //toggle state
+  int state = digitalRead(BUILTIN_LED);  // get the current state of GPIO1 pin
+  digitalWrite(BUILTIN_LED, !state);     // set pin to the opposite state
+}
+
 
 #include <timer.h>
 auto timer = timer_create_default(); // create a timer with default settings
@@ -69,15 +95,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
   DEBUG_PRINTLN();
   
   if (strcmp(topic, (String(mqtt_base) + "/" + String(mqtt_topic_restart)).c_str())==0) {
-    printMessageToLCD(topic, val);
+    //printMessageToLCD(topic, val);
     DEBUG_PRINT("RESTART");
-    saveConfig();
+    //saveConfig();
     ESP.restart();
   }
   
-    if (!processJson(message)) {
-    return;
-  }
+    //if (!processJson(message)) {
+    //return;
 
   if (stateOn) {
     // Update lights
@@ -122,10 +147,10 @@ void setup() {
     
   WiFi.printDiag(Serial);
     
-  bool validConf = readConfig();
-  if (!validConf) {
-    DEBUG_PRINTLN(F("ERROR config corrupted"));
-  }
+  //bool validConf = readConfig();
+  //if (!validConf) {
+  //  DEBUG_PRINTLN(F("ERROR config corrupted"));
+  //}
   
   rst_info *_reset_info = ESP.getResetInfoPtr();
   uint8_t _reset_reason = _reset_info->reason;
@@ -226,34 +251,34 @@ void loop() {
 
 
 void sendState() {
-  StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+  // StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
 
-  JsonObject& root = jsonBuffer.createObject();
+  // JsonObject& root = jsonBuffer.createObject();
 
-  root["state"] = (stateOn) ? on_cmd : off_cmd;
-  JsonObject& color = root.createNestedObject("color");
-  color["r"] = red;
-  color["g"] = green;
-  color["b"] = blue;
+  // root["state"] = (stateOn) ? on_cmd : off_cmd;
+  // JsonObject& color = root.createNestedObject("color");
+  // color["r"] = red;
+  // color["g"] = green;
+  // color["b"] = blue;
 
-  root["brightness"] = brightness;
+  // root["brightness"] = brightness;
 
-  if (colorfade) {
-    if (transitionTime == CONFIG_COLORFADE_TIME_SLOW) {
-      root["effect"] = "colorfade_slow";
-    }
-    else {
-      root["effect"] = "colorfade_fast";
-    }
-  }
-  else {
-    root["effect"] = "null";
-  }
+  // if (colorfade) {
+    // if (transitionTime == CONFIG_COLORFADE_TIME_SLOW) {
+      // root["effect"] = "colorfade_slow";
+    // }
+    // else {
+      // root["effect"] = "colorfade_fast";
+    // }
+  // }
+  // else {
+    // root["effect"] = "null";
+  // }
 
-  char buffer[root.measureLength() + 1];
-  root.printTo(buffer, sizeof(buffer));
+  // char buffer[root.measureLength() + 1];
+  // root.printTo(buffer, sizeof(buffer));
 
-  client.publish(light_state_topic, buffer, true);
+  // client.publish(light_state_topic, buffer, true);
 }
 
 void reconnect() {

@@ -65,7 +65,7 @@ static const char* const      static_gw                      = "192.168.1.1";
 static const char* const      static_sn                      = "255.255.255.0";
 static const char* const      mqtt_topic_state               = "";
 static const char* const      mqtt_topic_set                 = "set";
-
+static const char* const      mqtt_topic_restart             = "restart";
 
 
 #define CONFIG_MQTT_PAYLOAD_ON  "ON"
