@@ -13,10 +13,9 @@ POZOR na verzi desky esp8266 2.42+, nefunguje interrupt, až do vyřešení nep�
 
 uint32_t heartBeat                          = 0;
 
+DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
 
 #ifdef time
-#include <TimeLib.h>
-#include <Timezone.h>
 WiFiUDP EthernetUdp;
 static const char     ntpServerName[]       = "tik.cesnet.cz";
 //const int timeZone = 2;     // Central European Time
@@ -34,26 +33,25 @@ byte          realGreen         = 0;
 byte          realBlue          = 0;
 
 const int     redPin            = CONFIG_PIN_RED;
-//const int txPin = BUILTIN_LED; // On-board blue LED
 const int     greenPin          = CONFIG_PIN_GREEN;
 const int     bluePin           = CONFIG_PIN_BLUE;
 
-// Maintained state for reporting to HA
-byte          red               = 255;
-byte          green             = 255;
-byte          blue              = 255;
-byte          brightness        = 255;
+// // Maintained state for reporting to HA
+// byte          red               = 255;
+// byte          green             = 255;
+// byte          blue              = 255;
+// byte          brightness        = 255;
 
-bool          stateOn           = false;
+// bool          stateOn           = false;
 
-// Globals for fade/transitions
-bool          startFade         = false;
-unsigned long lastLoop          = 0;
-int           transitionTime    = 0;
-bool          inFade            = false;
-int           loopCount         = 0;
-int           stepR, stepG, stepB;
-int           redVal, grnVal, bluVal;
+// // Globals for fade/transitions
+// bool          startFade         = false;
+// unsigned long lastLoop          = 0;
+// int           transitionTime    = 0;
+// bool          inFade            = false;
+// int           loopCount         = 0;
+// int           stepR, stepG, stepB;
+// int           redVal, grnVal, bluVal;
 
 
 bool isDebugEnabled()
@@ -71,8 +69,18 @@ Ticker ticker;
 void tick()
 {
   //toggle state
-  int state = digitalRead(BUILTIN_LED);  // get the current state of GPIO1 pin
-  digitalWrite(BUILTIN_LED, !state);     // set pin to the opposite state
+  int state = digitalRead(bluePin);  // get the current state of GPIO1 pin
+  digitalWrite(bluePin, !state);     // set pin to the opposite state
+}
+
+//gets called when WiFiManager enters configuration mode
+void configModeCallback (WiFiManager *myWiFiManager) {
+  DEBUG_PRINTLN("Entered config mode");
+  DEBUG_PRINTLN(WiFi.softAPIP());
+  //if you used auto generated SSID, print it
+  DEBUG_PRINTLN(myWiFiManager->getConfigPortalSSID());
+  //entered config mode, make led toggle faster
+  ticker.attach(0.2, tick);
 }
 
 
@@ -99,32 +107,50 @@ void callback(char* topic, byte* payload, unsigned int length) {
     DEBUG_PRINT("RESTART");
     //saveConfig();
     ESP.restart();
-  }
-  
-    //if (!processJson(message)) {
-    //return;
+  } else if (strcmp(topic, (String(mqtt_base) + "/" + String(mqtt_topic_load)).c_str())==0) {
+    processJson(val);
+    // if (val.substring(0,1)=="r") {
+      // analogWrite(redPin, val.substring(1).toInt());
+      // analogWrite(greenPin, 0);
+      // analogWrite(bluePin, 0);
+    // } else if (val.substring(0,1)=="g") {
+      // analogWrite(redPin, 0);
+      // analogWrite(greenPin, val.substring(1).toInt());
+      // analogWrite(bluePin, 0);
+    // } else if (val.substring(0,1)=="b") {
+      // analogWrite(redPin, 0);
+      // analogWrite(greenPin, 0);
+      // analogWrite(bluePin, val.substring(1).toInt());
+    // }
+  // } else if (mymode == 'f') {   // f;8;255;34
+    // ExtractValues(2, 3);
+    // SetColor(atoi(vals[0]), atoi(vals[1]), atoi(vals[2]));
+  }  
 
-  if (stateOn) {
-    // Update lights
-    realRed = map(red, 0, 255, 0, brightness);
-    realGreen = map(green, 0, 255, 0, brightness);
-    realBlue = map(blue, 0, 255, 0, brightness);
-  }
-  else {
-    realRed = 0;
-    realGreen = 0;
-    realBlue = 0;
-  }
 
-  startFade = true;
-  inFade = false; // Kill the current fade
 
-  sendState();
+  // if (stateOn) {
+    // // Update lights
+    // realRed = map(red, 0, 255, 0, brightness);
+    // realGreen = map(green, 0, 255, 0, brightness);
+    // realBlue = map(blue, 0, 255, 0, brightness);
+  // }
+  // else {
+    // realRed = 0;
+    // realGreen = 0;
+    // realBlue = 0;
+  // }
+
+  // startFade = true;
+  // inFade = false; // Kill the current fade
+
+  //sendState();
 }
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+WiFiManager wifiManager;
 
 //----------------------------------------------------- S E T U P -----------------------------------------------------------
 void setup() {
@@ -138,19 +164,28 @@ void setup() {
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
 
+  ticker.attach(1, tick);
   //pinMode(txPin, OUTPUT);
   //digitalWrite(txPin, HIGH); // Turn off the on-board LED
 
+  WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
-  ticker.attach(1, tick);
-  //bool _dblreset = drd.detectDoubleReset();
-    
-  WiFi.printDiag(Serial);
-    
-  //bool validConf = readConfig();
-  //if (!validConf) {
-  //  DEBUG_PRINTLN(F("ERROR config corrupted"));
-  //}
+  //set callback that gets called when connecting to previous WiFi fails, and enters Access Point mode
+  wifiManager.setAPCallback(configModeCallback);
+  wifiManager.setConfigPortalTimeout(CONFIG_PORTAL_TIMEOUT);
+  wifiManager.setConnectTimeout(CONNECT_TIMEOUT);
+
+  if (drd.detectDoubleReset()) {
+    DEBUG_PRINTLN("Double reset detected, starting config portal...");
+    ticker.attach(0.2, tick);
+    if (!wifiManager.startConfigPortal(HOSTNAMEOTA)) {
+      DEBUG_PRINTLN("failed to connect and hit timeout");
+      delay(3000);
+      //reset and try again, or maybe put it to deep sleep
+      ESP.reset();
+      delay(5000);
+    }
+  }
   
   rst_info *_reset_info = ESP.getResetInfoPtr();
   uint8_t _reset_reason = _reset_info->reason;
@@ -170,23 +205,9 @@ void setup() {
 
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
-  
-  //WiFiManager
-  WiFiManager wifiManager;
-  
-  IPAddress _ip,_gw,_sn;
-  _ip.fromString(static_ip);
-  _gw.fromString(static_gw);
-  _sn.fromString(static_sn);
 
-  wifiManager.setSTAStaticIPConfig(_ip, _gw, _sn);
-  
-  DEBUG_PRINTLN(_ip);
-  DEBUG_PRINTLN(_gw);
-  DEBUG_PRINTLN(_sn);
+  WiFi.printDiag(Serial);
 
-  wifiManager.setAPCallback(configModeCallback);
-  
   if (!wifiManager.autoConnect(AUTOCONNECTNAME, AUTOCONNECTPWD)) { 
     DEBUG_PRINTLN("failed to connect and hit timeout");
     delay(3000);
@@ -194,6 +215,8 @@ void setup() {
     ESP.reset();
     delay(5000);
   } 
+
+  sendNetInfoMQTT();
 
 #ifdef time
   DEBUG_PRINTLN("Setup TIME");
@@ -228,8 +251,39 @@ void setup() {
     else if (error == OTA_END_ERROR) DEBUG_PRINTLN("End Failed");
   });
   ArduinoOTA.begin();
-#endif
+  ticker.detach();
+  
+  //test
+  for (uint8_t i=0; i<255; i++) {
+    analogWrite(redPin, i);
+    delay(5);
+  }
+  digitalWrite(redPin, 0);
+  
+  for (uint8_t i=0; i<255; i++) {
+    analogWrite(greenPin, i);
+    delay(5);
+  }
+  digitalWrite(greenPin, 0);
 
+  for (uint8_t i=0; i<255; i++) {
+    analogWrite(bluePin, i);
+    delay(5);
+  }
+  analogWrite(bluePin, 0);
+  #endif
+
+//setup timers
+  timer.every(SENDSTAT_DELAY, sendStatisticMQTT);
+
+  void * a;
+  sendStatisticMQTT(a);
+  
+  DEBUG_PRINTLN(" Ready");
+ 
+  drd.stop();
+  
+  DEBUG_PRINTLN(F("Setup end."));
 }
 
 //----------------------------------------------------- L O O P -----------------------------------------------------------
@@ -281,25 +335,152 @@ void sendState() {
   // client.publish(light_state_topic, buffer, true);
 }
 
+bool sendStatisticMQTT(void *) {
+  DEBUG_PRINTLN(F("Statistic"));
+
+  SenderClass sender;
+  sender.add("VersionSW", VERSION);
+  sender.add("Napeti",  ESP.getVcc());
+  sender.add("HeartBeat", heartBeat++);
+  sender.add("RSSI", WiFi.RSSI());
+  DEBUG_PRINTLN(F("Calling MQTT"));
+  
+  sender.sendMQTT(mqtt_server, mqtt_port, mqtt_username, mqtt_key, mqtt_base);
+  return true;
+}
+
+void sendNetInfoMQTT() {
+  DEBUG_PRINTLN(F("Net info"));
+
+  SenderClass sender;
+  sender.add("IP",              WiFi.localIP().toString().c_str());
+  sender.add("MAC",             WiFi.macAddress());
+  
+  DEBUG_PRINTLN(F("Calling MQTT"));
+  
+  sender.sendMQTT(mqtt_server, mqtt_port, mqtt_username, mqtt_key, mqtt_base);
+  return;
+}
+
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
+     if (lastConnectAttempt == 0 || lastConnectAttempt + connectDelay < millis()) {
     DEBUG_PRINT("Attempting MQTT connection...");
-    // Attempt to connect
-    if (client.connect(mqtt_base, mqtt_username, mqtt_key)) {
-      DEBUG_PRINTLN("connected");
-      // Once connected, publish an announcement...
-      //client.publish("outTopic","hello world");
-      // ... and resubscribe
-      //client.subscribe(mqtt_base + '/' + 'inTopic');
-      client.subscribe((String(mqtt_base) + "/" + "").c_str());
-      client.subscribe((String(mqtt_base) + "/" + "set").c_str());
-    } else {
-      DEBUG_PRINT("failed, rc=");
-      DEBUG_PRINT(client.state());
-      DEBUG_PRINTLN(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
+      // Attempt to connect
+      if (client.connect(mqtt_base, mqtt_username, mqtt_key)) {
+        DEBUG_PRINTLN("connected");
+        client.subscribe((String(mqtt_base) + "/#").c_str());
+      } else {
+        lastConnectAttempt = millis();
+        DEBUG_PRINT("failed, rc=");
+        DEBUG_PRINTLN(client.state());
+      }
     }
   }
+}
+
+bool processJson(String message) {
+  char json[500];
+  message.toCharArray(json, 500);
+  DEBUG_PRINTLN(json);
+
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, json);
+  realRed = doc["red"];
+  DEBUG_PRINTLN(realRed);
+  realBlue = doc["blue"];
+  DEBUG_PRINTLN(realBlue);
+  realGreen = doc["green"];
+  DEBUG_PRINTLN(realGreen);
+  analogWrite(redPin, realRed);
+  analogWrite(bluePin, realBlue);
+  analogWrite(greenPin, realGreen);
+ 
+
+  // if (root.containsKey("state")) {
+    // if (strcmp(root["state"], on_cmd) == 0) {
+      // stateOn = true;
+    // }
+    // else if (strcmp(root["state"], off_cmd) == 0) {
+      // stateOn = false;
+    // }
+  // }
+
+  // // If "flash" is included, treat RGB and brightness differently
+  // if (root.containsKey("flash") ||
+       // (root.containsKey("effect") && strcmp(root["effect"], "flash") == 0)) {
+
+    // if (root.containsKey("flash")) {
+      // flashLength = (int)root["flash"] * 1000;
+    // }
+    // else {
+      // flashLength = CONFIG_DEFAULT_FLASH_LENGTH * 1000;
+    // }
+
+    // if (root.containsKey("brightness")) {
+      // flashBrightness = root["brightness"];
+    // }
+    // else {
+      // flashBrightness = brightness;
+    // }
+
+    // if (root.containsKey("color")) {
+      // flashRed = root["color"]["r"];
+      // flashGreen = root["color"]["g"];
+      // flashBlue = root["color"]["b"];
+    // }
+    // else {
+      // flashRed = red;
+      // flashGreen = green;
+      // flashBlue = blue;
+    // }
+
+    // flashRed = map(flashRed, 0, 255, 0, flashBrightness);
+    // flashGreen = map(flashGreen, 0, 255, 0, flashBrightness);
+    // flashBlue = map(flashBlue, 0, 255, 0, flashBrightness);
+
+    // flash = true;
+    // startFlash = true;
+  // }
+  // else if (root.containsKey("effect") &&
+      // (strcmp(root["effect"], "colorfade_slow") == 0 || strcmp(root["effect"], "colorfade_fast") == 0)) {
+    // flash = false;
+    // colorfade = true;
+    // currentColor = 0;
+    // if (strcmp(root["effect"], "colorfade_slow") == 0) {
+      // transitionTime = CONFIG_COLORFADE_TIME_SLOW;
+    // }
+    // else {
+      // transitionTime = CONFIG_COLORFADE_TIME_FAST;
+    // }
+  // }
+  // else if (colorfade && !root.containsKey("color") && root.containsKey("brightness")) {
+    // // Adjust brightness during colorfade
+    // // (will be applied when fading to the next color)
+    // brightness = root["brightness"];
+  // }
+  // else { // No effect
+    // flash = false;
+    // colorfade = false;
+
+    // if (root.containsKey("color")) {
+      // red = root["color"]["r"];
+      // green = root["color"]["g"];
+      // blue = root["color"]["b"];
+    // }
+
+    // if (root.containsKey("brightness")) {
+      // brightness = root["brightness"];
+    // }
+
+    // if (root.containsKey("transition")) {
+      // transitionTime = root["transition"];
+    // }
+    // else {
+      // transitionTime = 0;
+    // }
+  // }
+
+  return true;
 }
