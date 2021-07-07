@@ -41,4 +41,4 @@
 #define CONFIG_INVERT_LED_LOGIC false
 
 // Enables Serial and print statements
-#define CONFIG_DEBUG false
+#define CONFIG_DEBUG true

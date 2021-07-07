@@ -91,9 +91,8 @@ Timer<> default_timer; // save as above
 //MQTT callback
 void callback(char* topic, byte* payload, unsigned int length) {
   char * pEnd;
-  long int valL;
   String val =  String();
-  DEBUG_PRINT("Message arrived [");
+  DEBUG_PRINT("\nMessage arrived [");
   DEBUG_PRINT(topic);
   DEBUG_PRINT("] ");
   for (int i=0;i<length;i++) {
@@ -288,6 +287,7 @@ void setup() {
 
 //----------------------------------------------------- L O O P -----------------------------------------------------------
 void loop() {
+  timer.tick(); // tick the timer
 #ifdef serverHTTP
   server.handleClient();
 #endif
@@ -296,9 +296,7 @@ void loop() {
   ArduinoOTA.handle();
 #endif
 
-  if (!client.connected()) {
-    reconnect();
-  }
+  reconnect();
   client.loop();
   
 } //loop
@@ -365,8 +363,8 @@ void sendNetInfoMQTT() {
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-     if (lastConnectAttempt == 0 || lastConnectAttempt + connectDelay < millis()) {
-    DEBUG_PRINT("Attempting MQTT connection...");
+    if (lastConnectAttempt == 0 || lastConnectAttempt + connectDelay < millis()) {
+      DEBUG_PRINT("Attempting MQTT connection...");
       // Attempt to connect
       if (client.connect(mqtt_base, mqtt_username, mqtt_key)) {
         DEBUG_PRINTLN("connected");

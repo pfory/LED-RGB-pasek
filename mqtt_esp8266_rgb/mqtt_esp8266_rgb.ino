@@ -21,7 +21,7 @@ const bool debug_mode = CONFIG_DEBUG;
 const bool led_invert = CONFIG_INVERT_LED_LOGIC;
 
 const int redPin = CONFIG_PIN_RED;
-const int txPin = BUILTIN_LED; // On-board blue LED
+//const int txPin = BUILTIN_LED; // On-board blue LED
 const int greenPin = CONFIG_PIN_GREEN;
 const int bluePin = CONFIG_PIN_BLUE;
 
@@ -93,18 +93,22 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 void setup() {
-  pinMode(redPin, OUTPUT);
-  pinMode(greenPin, OUTPUT);
-  pinMode(bluePin, OUTPUT);
-
-  pinMode(txPin, OUTPUT);
-  digitalWrite(txPin, HIGH); // Turn off the on-board LED
-
-  analogWriteRange(255);
-
   if (debug_mode) {
     Serial.begin(115200);
   }
+  Serial.println("RGB");
+
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  //pinMode(bluePin, OUTPUT);
+
+  //pinMode(txPin, OUTPUT);
+  //digitalWrite(txPin, HIGH); // Turn off the on-board LED
+
+  analogWriteRange(255);
+
+  pinMode(bluePin, FUNCTION_3); 
+
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
