@@ -2,7 +2,7 @@
 #define CONFIGURATION_H
 
 //SW name & version
-#define     VERSION                      "0.02"
+#define     VERSION                      "0.03"
 #define     SW_NAME                      "RGBLEDSTRIP1"
 
 #define timers
