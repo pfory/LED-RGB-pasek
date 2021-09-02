@@ -1,14 +1,3 @@
-/*RGB pasek
---------------------------------------------------------------------------------------------------------------------------
-Petr Fory pfory@seznam.cz
-GIT - https://github.com/pfory/LED_RGB_pasek
-//ESP8266-01
-POZOR na verzi desky esp8266 2.42+, nefunguje interrupt, až do vyřešení nepřecházet na vyšší verzi
-*/
-
-/*TODO
-*/
-
 #include "Configuration.h"
 
 uint32_t heartBeat                          = 0;
@@ -385,11 +374,11 @@ bool processJson(String message) {
 
   DynamicJsonDocument doc(1024);
   deserializeJson(doc, json);
-  realRed = doc["red"];
+  realRed = doc["r"];
   DEBUG_PRINTLN(realRed);
-  realBlue = doc["blue"];
+  realBlue = doc["be"];
   DEBUG_PRINTLN(realBlue);
-  realGreen = doc["green"];
+  realGreen = doc["g"];
   DEBUG_PRINTLN(realGreen);
   analogWrite(redPin, realRed);
   analogWrite(bluePin, realBlue);

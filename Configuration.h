@@ -1,8 +1,18 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
+/*RGB pasek
+--------------------------------------------------------------------------------------------------------------------------
+Petr Fory pfory@seznam.cz
+GIT - https://github.com/pfory/LED_RGB_pasek
+//ESP8266-01 1MB no FS LED on 2
+*/
+
+/*TODO
+*/
+
 //SW name & version
-#define     VERSION                      "0.03"
+#define     VERSION                      "0.10"
 #define     SW_NAME                      "RGBLEDSTRIP1"
 
 #define timers
